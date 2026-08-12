@@ -456,16 +456,15 @@ class IdentityCardPlugin(Star):
         return self._http_session
 
     async def _load_ini(self, session: aiohttp.ClientSession) -> dict:
-        """从飞鸟快验加载 INI 配置，带缓存"""
-        if self._ini_data is not None:
-            return self._ini_data
+        """从飞鸟快验加载 INI 配置，每次请求都刷新"""
         raw = await fetch_feiniao_data(session)
         if raw is not None:
             self._ini_data = parse_feiniao_ini(raw)
-            logger.info(f"身份配置已加载，共 {len(self._ini_data)} 条记录")
+            logger.info(f"身份配置已刷新，共 {len(self._ini_data)} 条记录")
         else:
-            self._ini_data = {}
-            logger.warning("飞鸟快验身份配置加载失败（可能 Token 无效或网络问题）")
+            if self._ini_data is None:
+                self._ini_data = {}
+            logger.warning("飞鸟快验身份配置刷新失败（可能 Token 无效或网络问题），使用上次缓存")
         return self._ini_data
 
     async def terminate(self):
